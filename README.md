@@ -6,6 +6,41 @@ Mybatis Provider 를 활용하여 기본적인 Crud 에 대해 xml 로 쿼리를
 
 ## 2. Quick Start
 
+### 2.1 Maven
+
+```xml
+...
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+...
+<dependency>
+    <groupId>com.github.BBackJK</groupId>
+    <artifactId>mybatis-crud-helper</artifactId>
+    <version>v1.0.0</version>
+</dependency>
+```
+
+### 2.2 Gradle
+
+```groovy
+...
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+...
+dependencies {
+    implementation 'com.github.BBackJK:mybatis-crud-helper:v0.1.0'
+}
+...
+```
+
 ## 3. How To Use
 
 Jpa 와 비슷하게 사용.
