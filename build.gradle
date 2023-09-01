@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+}
+
+group 'bback.module'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    slf4jVersion = '1.7.36'
+    mybatisVersion = '3.5.13'
+}
+
+dependencies {
+    compileOnly("org.slf4j:slf4j-api:${slf4jVersion}")
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation "org.mybatis:mybatis:${mybatisVersion}"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'bback.module.Main'
+    }
+    from {
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+task("re-jar") {
+    doFirst { println("clean re-jar...") }
+    dependsOn clean
+    dependsOn jar
+    doLast { println("build re-jar...") }
+}
