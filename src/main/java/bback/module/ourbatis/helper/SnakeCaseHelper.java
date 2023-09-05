@@ -1,6 +1,6 @@
-package bback.module.ourbatis.util;
+package bback.module.ourbatis.helper;
 
-public final class SnakeCaseUtils {
+public final class SnakeCaseHelper {
 
     public static final String CLASS_TYPE_WARNING = "getClassType() 메소드를 오버라이드 하여 default 로 'T' 타입을 return 해주세요.\n" + "public interface XDao extends OurbatisCrudHelper<X, Long> {\n" +
             "\t@Override\n" +
@@ -9,7 +9,7 @@ public final class SnakeCaseUtils {
             "\t}\n" +
             "}";
 
-    private SnakeCaseUtils() {
+    private SnakeCaseHelper() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 

@@ -1,7 +1,7 @@
 package bback.module.ourbatis.dao;
 
+import bback.module.ourbatis.helper.SnakeCaseHelper;
 import bback.module.ourbatis.provider.OurbatisCrudProvider;
-import bback.module.ourbatis.util.SnakeCaseUtils;
 import org.apache.ibatis.annotations.DeleteProvider;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.SelectProvider;
@@ -41,7 +41,7 @@ public interface OurbatisCrudHelper<T, R> {
     default Optional<T> baseSelectById(R r) {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
-            throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+            throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
         return this.baseSelectById(classType, r);
     }
@@ -49,7 +49,7 @@ public interface OurbatisCrudHelper<T, R> {
     default List<T> baseSelectAll() {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
-            throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+            throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
         return this.baseSelectAll(classType);
     }
@@ -57,7 +57,7 @@ public interface OurbatisCrudHelper<T, R> {
     default List<T> baseSelectCondition(T t) {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
-            throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+            throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
         return this.baseSelectCondition(classType, t);
     }
@@ -65,7 +65,7 @@ public interface OurbatisCrudHelper<T, R> {
     default int baseCountCondition(T t) {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
-            throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+            throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
         return this.baseCountCondition(classType, t);
     }
@@ -73,7 +73,7 @@ public interface OurbatisCrudHelper<T, R> {
     default int baseDeleteById(R r) {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
-            throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+            throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
         return this.baseDeleteById(classType, r);
     }
@@ -81,7 +81,7 @@ public interface OurbatisCrudHelper<T, R> {
     default int baseCountAll() {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
-            throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+            throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
         return this.baseCountAll(classType);
     }

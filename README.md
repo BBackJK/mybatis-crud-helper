@@ -20,7 +20,7 @@ Mybatis Provider 를 활용하여 기본적인 Crud 에 대해 xml 로 쿼리를
 <dependency>
     <groupId>com.github.BBackJK</groupId>
     <artifactId>mybatis-crud-helper</artifactId>
-    <version>v1.0.0</version>
+    <version>v0.1.0</version>
 </dependency>
 ```
 

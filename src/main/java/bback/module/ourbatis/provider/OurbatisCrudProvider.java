@@ -1,7 +1,7 @@
 package bback.module.ourbatis.provider;
 
 import bback.module.ourbatis.annotations.PK;
-import bback.module.ourbatis.util.SnakeCaseUtils;
+import bback.module.ourbatis.helper.SnakeCaseHelper;
 import org.apache.ibatis.jdbc.SQL;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
@@ -28,7 +28,7 @@ public class OurbatisCrudProvider {
         SQL sql = new SQL();
         Class<?> classType = t.getClass();
 
-        sql = sql.INSERT_INTO(SnakeCaseUtils.translate(classType.getSimpleName()));
+        sql = sql.INSERT_INTO(SnakeCaseHelper.translate(classType.getSimpleName()));
 
         Field[] fields = classType.getDeclaredFields();
         for (Field f : fields) {
@@ -37,7 +37,7 @@ public class OurbatisCrudProvider {
                 continue;
             }
             String fieldName = f.getName();
-            sql = sql.INTO_COLUMNS(SnakeCaseUtils.translate(fieldName))
+            sql = sql.INTO_COLUMNS(SnakeCaseHelper.translate(fieldName))
                     .INTO_VALUES(String.format("#{%s}", fieldName));
         }
         String query = sql.toString();
@@ -48,7 +48,7 @@ public class OurbatisCrudProvider {
     }
 
     public <T, R> String selectById(Class<T> classType, R r) {
-        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         if ( r == null ) throw new IllegalArgumentException();
         SQL sql = new SQL();
         Field[] fields = classType.getDeclaredFields();
@@ -57,11 +57,11 @@ public class OurbatisCrudProvider {
             if ( f.getAnnotation(PRIMARY_KEY) != null ) {
                 pkField = f;
             }
-            sql = sql.SELECT(SnakeCaseUtils.translate(f.getName()));
+            sql = sql.SELECT(SnakeCaseHelper.translate(f.getName()));
         }
-        sql = sql.FROM(SnakeCaseUtils.translate(classType.getSimpleName()));
+        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
 
-        String pkColumnName = pkField == null ? DEFAULT_PK_COLUMN_NAME : SnakeCaseUtils.translate(pkField.getName());
+        String pkColumnName = pkField == null ? DEFAULT_PK_COLUMN_NAME : SnakeCaseHelper.translate(pkField.getName());
         sql = sql.WHERE(String.format("%s = %s", pkColumnName, r));
 
         String query = sql.toString();
@@ -72,13 +72,13 @@ public class OurbatisCrudProvider {
     }
 
     public <T> String selectAll(Class<T> classType) {
-        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         SQL sql = new SQL();
         Field[] fields = classType.getDeclaredFields();
         for (Field f : fields) {
-            sql = sql.SELECT(SnakeCaseUtils.translate(f.getName()));
+            sql = sql.SELECT(SnakeCaseHelper.translate(f.getName()));
         }
-        sql = sql.FROM(SnakeCaseUtils.translate(classType.getSimpleName()));
+        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
 
         String query = sql.toString();
         if (LOGGER.isDebugEnabled()) {
@@ -88,13 +88,13 @@ public class OurbatisCrudProvider {
     }
 
     public <T> String selectAllCondition(Class<T> classType, T condition) {
-        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         SQL sql = new SQL();
         Field[] fields = classType.getDeclaredFields();
         for (Field f : fields) {
-            sql = sql.SELECT(SnakeCaseUtils.translate(f.getName()));
+            sql = sql.SELECT(SnakeCaseHelper.translate(f.getName()));
         }
-        sql = sql.FROM(SnakeCaseUtils.translate(classType.getSimpleName()));
+        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
 
         if (condition != null) {
             for (Field f : fields) {
@@ -107,7 +107,7 @@ public class OurbatisCrudProvider {
                     value = null;
                 }
                 if ( value != null ) {
-                    sql = sql.WHERE(String.format("%s = #{param2.%s}", SnakeCaseUtils.translate(f.getName()), f.getName()));
+                    sql = sql.WHERE(String.format("%s = #{param2.%s}", SnakeCaseHelper.translate(f.getName()), f.getName()));
                 }
             }
         }
@@ -119,10 +119,10 @@ public class OurbatisCrudProvider {
     }
 
     public <T> String countAll(Class<T> classType) {
-        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         SQL sql = new SQL();
         sql = sql.SELECT(COUNT_QUERY);
-        sql = sql.FROM(SnakeCaseUtils.translate(classType.getSimpleName()));
+        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
 
         String query = sql.toString();
         if (LOGGER.isDebugEnabled()) {
@@ -132,10 +132,10 @@ public class OurbatisCrudProvider {
     }
 
     public <T> String countAllCondition(Class<T> classType, T condition) {
-        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         SQL sql = new SQL();
         sql = sql.SELECT(COUNT_QUERY);
-        sql = sql.FROM(SnakeCaseUtils.translate(classType.getSimpleName()));
+        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
 
         Field[] fields = classType.getDeclaredFields();
         if (condition != null) {
@@ -149,7 +149,7 @@ public class OurbatisCrudProvider {
                     value = null;
                 }
                 if ( value != null ) {
-                    sql = sql.WHERE(String.format("%s = #{param2.%s}", SnakeCaseUtils.translate(f.getName()), f.getName()));
+                    sql = sql.WHERE(String.format("%s = #{param2.%s}", SnakeCaseHelper.translate(f.getName()), f.getName()));
                 }
             }
         }
@@ -165,7 +165,7 @@ public class OurbatisCrudProvider {
         if ( t == null ) throw new IllegalArgumentException();
         SQL sql = new SQL();
         Class<?> classType = t.getClass();
-        sql = sql.UPDATE(SnakeCaseUtils.translate(classType.getSimpleName()));
+        sql = sql.UPDATE(SnakeCaseHelper.translate(classType.getSimpleName()));
 
         Field[] fields = classType.getDeclaredFields();
         Field pkField = null;
@@ -178,11 +178,11 @@ public class OurbatisCrudProvider {
                 }
             }
             String fieldName = f.getName();
-            sql = sql.SET(String.format("%s = #{%s}", SnakeCaseUtils.translate(fieldName), fieldName));
+            sql = sql.SET(String.format("%s = #{%s}", SnakeCaseHelper.translate(fieldName), fieldName));
         }
 
         String pkColumnName = pkField == null ? DEFAULT_PK_COLUMN_NAME : pkField.getName();
-        sql = sql.WHERE(String.format("%s = #{%s}", SnakeCaseUtils.translate(pkColumnName), pkColumnName));
+        sql = sql.WHERE(String.format("%s = #{%s}", SnakeCaseHelper.translate(pkColumnName), pkColumnName));
 
         String query = sql.toString();
         if (LOGGER.isDebugEnabled()) {
@@ -192,10 +192,10 @@ public class OurbatisCrudProvider {
     }
 
     public <T, R> String deleteById(Class<T> classType, R r) {
-        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseUtils.CLASS_TYPE_WARNING);
+        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         if ( r == null ) throw new IllegalArgumentException();
         SQL sql = new SQL();
-        sql.DELETE_FROM(SnakeCaseUtils.translate(classType.getSimpleName()));
+        sql.DELETE_FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
         Field[] fields = classType.getDeclaredFields();
         Field pk = null;
         for (Field f : fields) {
@@ -204,7 +204,7 @@ public class OurbatisCrudProvider {
                 pk = f;
             }
         }
-        String pkColumnName = pk == null ? DEFAULT_PK_COLUMN_NAME : SnakeCaseUtils.translate(pk.getName());
+        String pkColumnName = pk == null ? DEFAULT_PK_COLUMN_NAME : SnakeCaseHelper.translate(pk.getName());
         sql = sql.WHERE(String.format("%s = %s", pkColumnName, r));
 
         String query = sql.toString();
