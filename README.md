@@ -19,8 +19,8 @@ Mybatis Provider 를 활용하여 기본적인 Crud 에 대해 xml 로 쿼리를
 ...
 <dependency>
     <groupId>com.github.BBackJK</groupId>
-    <artifactId>mybatis-crud-helper</artifactId>
-    <version>v0.1.0</version>
+    <artifactId>ourbatis</artifactId>
+    <version>v0.2.0</version>
 </dependency>
 ```
 
@@ -36,7 +36,7 @@ allprojects {
 }
 ...
 dependencies {
-    implementation 'com.github.BBackJK:mybatis-crud-helper:v0.1.0'
+    implementation 'com.github.BBackJK:ourbatis:v0.2.0'
 }
 ...
 ```
@@ -116,6 +116,7 @@ public class MemberService {
         
         // Member 의 field 를 기반으로 동적 where 생성
         // 배포버전 0.1.0 기준으로 `like` 및 `in` 과 같은 쿼리는 사용 X. 무조건 `=`
+        // 배포버전 0.2.0 기준으로 @deprecated
         Member conditionDummy = Member.of(null, null, null, "W");
         List<Member> filteringList = memberDao.baseSelectCondition(conditionDummy);
         
@@ -124,6 +125,7 @@ public class MemberService {
 
         // filteringList 와 같은 동작으로 count 를 반환
         Member conditionCountDummy = Member.of(null, null, null, "W");
+        // 배포버전 0.2.0 기준으로 @deprecated
         int countCondition = memberDao.baseCountCondition(conditionCountDummy);
 
         // save 했던 dummy 를 나이가 10 에서 100 으로, 성별이 W 에서 M 으로 변경하려고 할 때,
