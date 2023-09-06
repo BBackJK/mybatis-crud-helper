@@ -16,9 +16,9 @@ ext {
 
 dependencies {
     compileOnly("org.slf4j:slf4j-api:${slf4jVersion}")
+    compileOnly "org.mybatis:mybatis:${mybatisVersion}"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    implementation "org.mybatis:mybatis:${mybatisVersion}"
 }
 
 test {
