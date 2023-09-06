@@ -15,7 +15,7 @@ public final class SnakeCaseHelper {
 
     public static String translate(String input)
     {
-        if (input == null) return input; // garbage in, garbage out
+        if (input == null) return null; // garbage in, garbage out
         int length = input.length();
         StringBuilder result = new StringBuilder(length * 2);
         int resultLength = 0;

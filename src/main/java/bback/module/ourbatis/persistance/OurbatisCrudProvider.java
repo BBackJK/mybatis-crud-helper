@@ -1,6 +1,5 @@
 package bback.module.ourbatis.persistance;
 
-import bback.module.ourbatis.annotations.ConditionSyntax;
 import bback.module.ourbatis.annotations.PK;
 import bback.module.ourbatis.helper.SnakeCaseHelper;
 import org.apache.ibatis.jdbc.SQL;
@@ -8,7 +7,6 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
 
 public final class OurbatisCrudProvider {
 
@@ -16,13 +14,10 @@ public final class OurbatisCrudProvider {
     private static final Class<PK> PRIMARY_KEY = PK.class;
     private static final String DEFAULT_PK_COLUMN_NAME = "ID";
     private static final String COUNT_QUERY = "count(*)";
-    private static final String CONDITION_PARAMETER_CONTEXT = "param2";
     public static final String INSERT_HANDLER = "insert";
     public static final String SELECT_HANDLER = "selectById";
     public static final String SELECTS_HANDLER = "selectAll";
-    public static final String SELECTS_CONDITION_HANDLER = "selectAllCondition";
     public static final String COUNT_HANDLER = "countAll";
-    public static final String COUNT_CONDITION_HANDLER = "countAllCondition";
     public static final String UPDATE_HANDLER = "updateById";
     public static final String DELETE_HANDLER = "deleteById";
 
@@ -82,93 +77,11 @@ public final class OurbatisCrudProvider {
         return query;
     }
 
-    public <T, C extends PageCondition> String selectAllCondition(Class<T> classType, C condition) {
-        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
-        if ( condition == null ) {
-            return selectAll(classType);
-        }
-        Class<?> conditionClassType = condition.getClass();
-        SQL sql = new SQL();
-        Field[] fields = classType.getDeclaredFields();
-        for (Field f : fields) {
-            String fieldName = f.getName();
-            String columnName = getColumnName(f);
-            sql = sql.SELECT(columnName);
-
-            ConditionSyntax conditionSyntax = f.getAnnotation(ConditionSyntax.class);
-            if ( conditionSyntax != null ) {
-                Object value;
-                try {
-                    Field conditionField = conditionClassType.getDeclaredField(fieldName);
-                    conditionField.setAccessible(true);
-                    value = conditionField.get(condition);
-                } catch (Exception ignore) {
-                    value = null;
-                }
-                if (value != null) {
-                    String mybatisParameterSyntax = String.format("#{%s.%s}", CONDITION_PARAMETER_CONTEXT, fieldName);
-                    // String.format 은 따옴표 사용 시 Exception 발생
-                    String formatSyntax = MessageFormat.format(conditionSyntax.syntax().get(), mybatisParameterSyntax);
-                    sql = sql.WHERE(String.format("%s %s", columnName, formatSyntax));
-                }
-            }
-        }
-        sql = sql.FROM(getTableName(classType));
-
-        if (condition.isPaging()) {
-            sql = sql.LIMIT(condition.getPageSize());
-            sql = sql.OFFSET(condition.getStartPage());
-        }
-
-        String query = sql.toString();
-        logging(query);
-        return query;
-    }
-
     public <T> String countAll(Class<T> classType) {
         if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         SQL sql = new SQL();
         sql = sql.SELECT(COUNT_QUERY);
         sql = sql.FROM(getTableName(classType));
-        String query = sql.toString();
-        logging(query);
-        return query;
-    }
-
-    public <T, C extends PageCondition> String countAllCondition(Class<T> classType, C condition) {
-        if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
-        if ( condition == null ) {
-            return countAll(classType);
-        }
-        Class<?> conditionClassType = condition.getClass();
-        SQL sql = new SQL();
-        sql = sql.SELECT(COUNT_QUERY);
-        sql = sql.FROM(getTableName(classType));
-
-        Field[] fields = classType.getDeclaredFields();
-        for (Field f : fields) {
-            String fieldName = f.getName();
-            ConditionSyntax conditionSyntax = f.getAnnotation(ConditionSyntax.class);
-            if (conditionSyntax != null) {
-                f.setAccessible(true);
-
-                Object value;
-                try {
-                    Field conditionField = conditionClassType.getDeclaredField(fieldName);
-                    conditionField.setAccessible(true);
-                    value = conditionField.get(condition);
-                } catch (Exception ignore) {
-                    value = null;
-                }
-                if ( value != null ) {
-                    String mybatisParameterSyntax = String.format("#{%s.%s}", CONDITION_PARAMETER_CONTEXT, fieldName);
-                    // String.format 은 따옴표 사용 시 Exception 발생
-                    String formatSyntax = MessageFormat.format(conditionSyntax.syntax().get(), mybatisParameterSyntax);
-                    sql = sql.WHERE(String.format("%s %s", getColumnName(fieldName), formatSyntax));
-                }
-            }
-        }
-
         String query = sql.toString();
         logging(query);
         return query;
