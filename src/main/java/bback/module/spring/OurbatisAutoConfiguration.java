@@ -4,7 +4,7 @@ import bback.module.ourbatis.interceptors.*;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,7 +16,7 @@ public class OurbatisAutoConfiguration implements InitializingBean {
     private static final Log LOGGER = LogFactory.getLog(OurbatisAutoConfiguration.class);
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnBean(ListableDelegator.class)
     public ExecutorInterceptor executorInterceptor(
             List<PreQueryDelegator> preQueryDelegatorList
             , List<PostQueryDelegator> postQueryDelegatorList
@@ -32,15 +32,9 @@ public class OurbatisAutoConfiguration implements InitializingBean {
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnBean(PrepareDelegator.class)
     public StatementInterceptor statementInterceptor(PrepareDelegator prepareDelegator) {
         return new StatementInterceptor(prepareDelegator);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public StatementInterceptor statementInterceptor() {
-        return new StatementInterceptor(null);
     }
 
     @Override
