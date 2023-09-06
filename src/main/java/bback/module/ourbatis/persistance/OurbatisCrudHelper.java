@@ -1,7 +1,6 @@
-package bback.module.ourbatis.dao;
+package bback.module.ourbatis.persistance;
 
 import bback.module.ourbatis.helper.SnakeCaseHelper;
-import bback.module.ourbatis.provider.OurbatisCrudProvider;
 import org.apache.ibatis.annotations.DeleteProvider;
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.SelectProvider;
@@ -10,7 +9,7 @@ import org.apache.ibatis.annotations.UpdateProvider;
 import java.util.List;
 import java.util.Optional;
 
-public interface OurbatisCrudHelper<T, R> {
+public interface OurbatisCrudHelper<T, P> {
 
     Class<T> getClassType();
 
@@ -18,32 +17,32 @@ public interface OurbatisCrudHelper<T, R> {
     int baseSave(T t);
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.SELECT_HANDLER)
-    Optional<T> baseSelectById(Class<T> classType, R r);
+    Optional<T> baseSelectById(Class<T> classType, P pk);
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.SELECTS_HANDLER)
     List<T> baseSelectAll(Class<T> classType);
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.SELECTS_CONDITION_HANDLER)
-    List<T> baseSelectCondition(Class<T> classType, T condition);
+    <C extends PageCondition> List<T> baseSelectCondition(Class<T> classType, C condition);
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.COUNT_HANDLER)
     int baseCountAll(Class<T> classType);
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.COUNT_CONDITION_HANDLER)
-    int baseCountCondition(Class<T> classType, T condition);
+    <C extends PageCondition> int baseCountCondition(Class<T> classType, C condition);
 
     @UpdateProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.UPDATE_HANDLER)
     int baseUpdateById(T t);
 
     @DeleteProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.DELETE_HANDLER)
-    int baseDeleteById(Class<T> classType, R r);
+    int baseDeleteById(Class<T> classType, P pk);
 
-    default Optional<T> baseSelectById(R r) {
+    default Optional<T> baseSelectById(P pk) {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
             throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
-        return this.baseSelectById(classType, r);
+        return this.baseSelectById(classType, pk);
     }
 
     default List<T> baseSelectAll() {
@@ -54,28 +53,28 @@ public interface OurbatisCrudHelper<T, R> {
         return this.baseSelectAll(classType);
     }
 
-    default List<T> baseSelectCondition(T t) {
+    default <C extends PageCondition> List<T> baseSelectCondition(C condition) {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
             throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
-        return this.baseSelectCondition(classType, t);
+        return this.baseSelectCondition(classType, condition);
     }
 
-    default int baseCountCondition(T t) {
+    default <C extends PageCondition> int baseCountCondition(C condition) {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
             throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
-        return this.baseCountCondition(classType, t);
+        return this.baseCountCondition(classType, condition);
     }
 
-    default int baseDeleteById(R r) {
+    default int baseDeleteById(P pk) {
         Class<T> classType = this.getClassType();
         if ( classType == null ) {
             throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
-        return this.baseDeleteById(classType, r);
+        return this.baseDeleteById(classType, pk);
     }
 
     default int baseCountAll() {

@@ -1,5 +1,6 @@
-package bback.module.ourbatis.provider;
+package bback.module.ourbatis.persistance;
 
+import bback.module.ourbatis.annotations.ConditionSyntax;
 import bback.module.ourbatis.annotations.PK;
 import bback.module.ourbatis.helper.SnakeCaseHelper;
 import org.apache.ibatis.jdbc.SQL;
@@ -7,13 +8,15 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 
 import java.lang.reflect.Field;
+import java.text.MessageFormat;
 
-public class OurbatisCrudProvider {
+public final class OurbatisCrudProvider {
 
     private static final Log LOGGER = LogFactory.getLog(OurbatisCrudProvider.class);
     private static final Class<PK> PRIMARY_KEY = PK.class;
     private static final String DEFAULT_PK_COLUMN_NAME = "ID";
     private static final String COUNT_QUERY = "count(*)";
+    private static final String CONDITION_PARAMETER_CONTEXT = "param2";
     public static final String INSERT_HANDLER = "insert";
     public static final String SELECT_HANDLER = "selectById";
     public static final String SELECTS_HANDLER = "selectAll";
@@ -28,7 +31,7 @@ public class OurbatisCrudProvider {
         SQL sql = new SQL();
         Class<?> classType = t.getClass();
 
-        sql = sql.INSERT_INTO(SnakeCaseHelper.translate(classType.getSimpleName()));
+        sql = sql.INSERT_INTO(getTableName(classType));
 
         Field[] fields = classType.getDeclaredFields();
         for (Field f : fields) {
@@ -37,37 +40,31 @@ public class OurbatisCrudProvider {
                 continue;
             }
             String fieldName = f.getName();
-            sql = sql.INTO_COLUMNS(SnakeCaseHelper.translate(fieldName))
+            sql = sql.INTO_COLUMNS(getColumnName(fieldName))
                     .INTO_VALUES(String.format("#{%s}", fieldName));
         }
         String query = sql.toString();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("query :: \n" + query);
-        }
+        logging(query);
         return query;
     }
 
-    public <T, R> String selectById(Class<T> classType, R r) {
+    public <T, P> String selectById(Class<T> classType, P pk) {
         if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
-        if ( r == null ) throw new IllegalArgumentException();
+        if ( pk == null ) throw new IllegalArgumentException();
         SQL sql = new SQL();
-        Field[] fields = classType.getDeclaredFields();
         Field pkField = null;
+        Field[] fields = classType.getDeclaredFields();
         for (Field f : fields) {
             if ( f.getAnnotation(PRIMARY_KEY) != null ) {
                 pkField = f;
             }
-            sql = sql.SELECT(SnakeCaseHelper.translate(f.getName()));
+            sql = sql.SELECT(getColumnName(f));
         }
-        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
-
-        String pkColumnName = pkField == null ? DEFAULT_PK_COLUMN_NAME : SnakeCaseHelper.translate(pkField.getName());
-        sql = sql.WHERE(String.format("%s = %s", pkColumnName, r));
+        sql = sql.FROM(getTableName(classType));
+        sql = sql.WHERE(String.format("%s = %s", getPrimaryKeyColumnName(pkField), pk));
 
         String query = sql.toString();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("query :: \n" + query);
-        }
+        logging(query);
         return query;
     }
 
@@ -76,45 +73,55 @@ public class OurbatisCrudProvider {
         SQL sql = new SQL();
         Field[] fields = classType.getDeclaredFields();
         for (Field f : fields) {
-            sql = sql.SELECT(SnakeCaseHelper.translate(f.getName()));
+            sql = sql.SELECT(getColumnName(f));
         }
-        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
+        sql = sql.FROM(getTableName(classType));
 
         String query = sql.toString();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("query :: \n" + query);
-        }
+        logging(query);
         return query;
     }
 
-    public <T> String selectAllCondition(Class<T> classType, T condition) {
+    public <T, C extends PageCondition> String selectAllCondition(Class<T> classType, C condition) {
         if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
+        if ( condition == null ) {
+            return selectAll(classType);
+        }
+        Class<?> conditionClassType = condition.getClass();
         SQL sql = new SQL();
         Field[] fields = classType.getDeclaredFields();
         for (Field f : fields) {
-            sql = sql.SELECT(SnakeCaseHelper.translate(f.getName()));
-        }
-        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
+            String fieldName = f.getName();
+            String columnName = getColumnName(f);
+            sql = sql.SELECT(columnName);
 
-        if (condition != null) {
-            for (Field f : fields) {
-                f.setAccessible(true);
-
+            ConditionSyntax conditionSyntax = f.getAnnotation(ConditionSyntax.class);
+            if ( conditionSyntax != null ) {
                 Object value;
                 try {
-                    value = f.get(condition);
-                } catch (IllegalAccessException ignore) {
+                    Field conditionField = conditionClassType.getDeclaredField(fieldName);
+                    conditionField.setAccessible(true);
+                    value = conditionField.get(condition);
+                } catch (Exception ignore) {
                     value = null;
                 }
-                if ( value != null ) {
-                    sql = sql.WHERE(String.format("%s = #{param2.%s}", SnakeCaseHelper.translate(f.getName()), f.getName()));
+                if (value != null) {
+                    String mybatisParameterSyntax = String.format("#{%s.%s}", CONDITION_PARAMETER_CONTEXT, fieldName);
+                    // String.format 은 따옴표 사용 시 Exception 발생
+                    String formatSyntax = MessageFormat.format(conditionSyntax.syntax().get(), mybatisParameterSyntax);
+                    sql = sql.WHERE(String.format("%s %s", columnName, formatSyntax));
                 }
             }
         }
-        String query = sql.toString();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("query :: \n" + query);
+        sql = sql.FROM(getTableName(classType));
+
+        if (condition.isPaging()) {
+            sql = sql.LIMIT(condition.getPageSize());
+            sql = sql.OFFSET(condition.getStartPage());
         }
+
+        String query = sql.toString();
+        logging(query);
         return query;
     }
 
@@ -122,42 +129,48 @@ public class OurbatisCrudProvider {
         if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         SQL sql = new SQL();
         sql = sql.SELECT(COUNT_QUERY);
-        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
-
+        sql = sql.FROM(getTableName(classType));
         String query = sql.toString();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("query :: \n" + query);
-        }
+        logging(query);
         return query;
     }
 
-    public <T> String countAllCondition(Class<T> classType, T condition) {
+    public <T, C extends PageCondition> String countAllCondition(Class<T> classType, C condition) {
         if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
+        if ( condition == null ) {
+            return countAll(classType);
+        }
+        Class<?> conditionClassType = condition.getClass();
         SQL sql = new SQL();
         sql = sql.SELECT(COUNT_QUERY);
-        sql = sql.FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
+        sql = sql.FROM(getTableName(classType));
 
         Field[] fields = classType.getDeclaredFields();
-        if (condition != null) {
-            for (Field f : fields) {
+        for (Field f : fields) {
+            String fieldName = f.getName();
+            ConditionSyntax conditionSyntax = f.getAnnotation(ConditionSyntax.class);
+            if (conditionSyntax != null) {
                 f.setAccessible(true);
 
                 Object value;
                 try {
-                    value = f.get(condition);
-                } catch (IllegalAccessException ignore) {
+                    Field conditionField = conditionClassType.getDeclaredField(fieldName);
+                    conditionField.setAccessible(true);
+                    value = conditionField.get(condition);
+                } catch (Exception ignore) {
                     value = null;
                 }
                 if ( value != null ) {
-                    sql = sql.WHERE(String.format("%s = #{param2.%s}", SnakeCaseHelper.translate(f.getName()), f.getName()));
+                    String mybatisParameterSyntax = String.format("#{%s.%s}", CONDITION_PARAMETER_CONTEXT, fieldName);
+                    // String.format 은 따옴표 사용 시 Exception 발생
+                    String formatSyntax = MessageFormat.format(conditionSyntax.syntax().get(), mybatisParameterSyntax);
+                    sql = sql.WHERE(String.format("%s %s", getColumnName(fieldName), formatSyntax));
                 }
             }
         }
 
         String query = sql.toString();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("query :: \n" + query);
-        }
+        logging(query);
         return query;
     }
 
@@ -165,7 +178,7 @@ public class OurbatisCrudProvider {
         if ( t == null ) throw new IllegalArgumentException();
         SQL sql = new SQL();
         Class<?> classType = t.getClass();
-        sql = sql.UPDATE(SnakeCaseHelper.translate(classType.getSimpleName()));
+        sql = sql.UPDATE(getTableName(classType));
 
         Field[] fields = classType.getDeclaredFields();
         Field pkField = null;
@@ -178,39 +191,56 @@ public class OurbatisCrudProvider {
                 }
             }
             String fieldName = f.getName();
-            sql = sql.SET(String.format("%s = #{%s}", SnakeCaseHelper.translate(fieldName), fieldName));
+            sql = sql.SET(String.format("%s = #{%s}", getColumnName(fieldName), fieldName));
         }
 
         String pkColumnName = pkField == null ? DEFAULT_PK_COLUMN_NAME : pkField.getName();
         sql = sql.WHERE(String.format("%s = #{%s}", SnakeCaseHelper.translate(pkColumnName), pkColumnName));
 
         String query = sql.toString();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("query :: \n" + query);
-        }
+        logging(query);
         return query;
     }
 
-    public <T, R> String deleteById(Class<T> classType, R r) {
+    public <T, P> String deleteById(Class<T> classType, P pk) {
         if ( classType == null ) throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
-        if ( r == null ) throw new IllegalArgumentException();
+        if ( pk == null ) throw new IllegalArgumentException();
         SQL sql = new SQL();
-        sql.DELETE_FROM(SnakeCaseHelper.translate(classType.getSimpleName()));
+        sql.DELETE_FROM(getTableName(classType));
         Field[] fields = classType.getDeclaredFields();
-        Field pk = null;
+        Field pkField = null;
         for (Field f : fields) {
             PK candidate = f.getAnnotation(PRIMARY_KEY);
             if ( candidate != null ) {
-                pk = f;
+                pkField = f;
             }
         }
-        String pkColumnName = pk == null ? DEFAULT_PK_COLUMN_NAME : SnakeCaseHelper.translate(pk.getName());
-        sql = sql.WHERE(String.format("%s = %s", pkColumnName, r));
+        sql = sql.WHERE(String.format("%s = %s", getPrimaryKeyColumnName(pkField), pk));
 
         String query = sql.toString();
+        logging(query);
+        return query;
+    }
+
+    private String getTableName(Class<?> classType) {
+        return SnakeCaseHelper.translate(classType.getSimpleName());
+    }
+
+    private String getColumnName(Field f) {
+        return getColumnName(f.getName());
+    }
+
+    private String getColumnName(String fieldName) {
+        return SnakeCaseHelper.translate(fieldName);
+    }
+
+    private String getPrimaryKeyColumnName(Field pkField) {
+        return pkField == null ? DEFAULT_PK_COLUMN_NAME : getColumnName(pkField);
+    }
+
+    private void logging(String query) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("query :: \n" + query);
         }
-        return query;
     }
 }
