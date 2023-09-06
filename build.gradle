@@ -12,11 +12,17 @@ repositories {
 ext {
     slf4jVersion = '1.7.36'
     mybatisVersion = '3.5.13'
+    springVersion = '5.3.27'
+    springBootVersion = '2.7.15'
 }
 
 dependencies {
     compileOnly("org.slf4j:slf4j-api:${slf4jVersion}")
     compileOnly "org.mybatis:mybatis:${mybatisVersion}"
+    compileOnly "org.springframework:spring-beans:${springVersion}"
+    compileOnly "org.springframework:spring-context:${springVersion}"
+    compileOnly "org.springframework.boot:spring-boot-autoconfigure:${springBootVersion}"
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }

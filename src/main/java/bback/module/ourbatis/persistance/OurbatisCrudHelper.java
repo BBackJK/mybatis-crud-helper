@@ -22,14 +22,8 @@ public interface OurbatisCrudHelper<T, P> {
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.SELECTS_HANDLER)
     List<T> baseSelectAll(Class<T> classType);
 
-    @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.SELECTS_CONDITION_HANDLER)
-    <C extends PageCondition> List<T> baseSelectCondition(Class<T> classType, C condition);
-
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.COUNT_HANDLER)
     int baseCountAll(Class<T> classType);
-
-    @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.COUNT_CONDITION_HANDLER)
-    <C extends PageCondition> int baseCountCondition(Class<T> classType, C condition);
 
     @UpdateProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.UPDATE_HANDLER)
     int baseUpdateById(T t);
@@ -51,22 +45,6 @@ public interface OurbatisCrudHelper<T, P> {
             throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
         }
         return this.baseSelectAll(classType);
-    }
-
-    default <C extends PageCondition> List<T> baseSelectCondition(C condition) {
-        Class<T> classType = this.getClassType();
-        if ( classType == null ) {
-            throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
-        }
-        return this.baseSelectCondition(classType, condition);
-    }
-
-    default <C extends PageCondition> int baseCountCondition(C condition) {
-        Class<T> classType = this.getClassType();
-        if ( classType == null ) {
-            throw new IllegalArgumentException(SnakeCaseHelper.CLASS_TYPE_WARNING);
-        }
-        return this.baseCountCondition(classType, condition);
     }
 
     default int baseDeleteById(P pk) {
