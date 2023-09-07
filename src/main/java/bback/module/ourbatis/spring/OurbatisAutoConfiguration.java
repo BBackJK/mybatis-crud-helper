@@ -1,4 +1,4 @@
-package bback.module.spring;
+package bback.module.ourbatis.spring;
 
 import bback.module.ourbatis.interceptors.*;
 import org.apache.ibatis.logging.Log;

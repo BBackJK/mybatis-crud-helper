@@ -43,6 +43,9 @@ dependencies {
 
 ## 3. How To Use
 
+
+### 3.1 CRUD Helper
+
 Jpa 와 비슷하게 사용.
 
 ```sql
@@ -140,3 +143,69 @@ public class MemberService {
 }
 
 ```
+
+
+### 3.2 Interceptor Helper
+
+Ourbatis 는 Mybatis Executor, Statement interceptor 를 미리 구현하여,
+
+결과가 수행(`invocation.proceed()`)되기 전과 후 부분에 interceptor 를 추가로 넣어서 쉽게 interceptor 를 사용할 수 있도록 지원한다.
+
+```java
+// interceptor delegator bean
+@Slf4j
+@Component  // Bean 으로 등록해주면, Ourbatis 의 해당 Delegator 를 사용하는 interceptor 가 자동으로 bean 으로 등록되어, interceptor 가 가능해진다.
+public class PreQueryInterceptor implements PreQueryDelegator {
+
+    @Override
+    public void doIntercept(Executor executor, MappedStatement mappedStatement, Object o, RowBounds rowBounds, ResultHandler<?> resultHandler) throws Throwable {
+        log.info("query interceptor do intercept...");
+    }
+}
+
+
+// dao 호출하는 service
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class MemberService {
+
+    private final MemberDao memberDao;
+
+    public void findById(long l) {
+        Optional<Member> member = memberDao.baseSelectById(Member.class, l);
+        member.ifPresent(m -> {
+            log.info("member :: {}", m);
+        });
+    }
+}
+
+// service 를 호출하는 main
+@SpringBootApplication
+@Slf4j
+public class WhateverApplication {
+
+    public static void main(String[] args) {
+        ConfigurableApplicationContext applicationContext = SpringApplication.run(WhateverApplication.class, args);
+        try {
+            MemberService memberService = applicationContext.getBean(MemberService.class);
+            memberService.register(
+                    Member.of(null, "홍길동1", 10, "M")
+            );
+
+            memberService.findById(1L);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+    }
+}
+```
+
+
+```shell
+# dao 메소드 호출 시
+[LOG] query interceptor do intercept...
+[LOG] member :: Member(/** member info... **/)
+```
+
+> 해당 interceptor delegator 기능은 spring boot 의 auto configuration 을 이용하여 bean 으로 등록하기에, **spring boot 프로젝트에서만** 사용이 가능합니다.
