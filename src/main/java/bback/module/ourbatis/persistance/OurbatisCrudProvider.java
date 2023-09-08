@@ -16,6 +16,7 @@ public final class OurbatisCrudProvider {
 
     private static final Log LOGGER = LogFactory.getLog(OurbatisCrudProvider.class);
     private static final Class<OurbatisCrudHelper.PK> PRIMARY_KEY = OurbatisCrudHelper.PK.class;
+    private static final Class<OurbatisCrudHelper.ConditionColumn> CONDITION_COLUMN = OurbatisCrudHelper.ConditionColumn.class;
     private static final String DEFAULT_PK_COLUMN_NAME = "ID";
     private static final String COUNT_QUERY = "count(*)";
     public static final String INSERT_HANDLER = "insert";
@@ -31,7 +32,7 @@ public final class OurbatisCrudProvider {
         if ( t == null ) throw new IllegalArgumentException();
         SQL sql = new SQL();
         Class<?> classType = t.getClass();
-        sql = sql.INSERT_INTO(getTableName(classType));
+        sql = sql.INSERT_INTO(this.getTableName(classType));
 
         Field[] fields = classType.getDeclaredFields();
         for (Field f : fields) {
@@ -90,10 +91,10 @@ public final class OurbatisCrudProvider {
         Field[] fields = conditionClass.getDeclaredFields();
         for (Field f : fields) {
             String fieldName = f.getName();
-            String columnName = getColumnName(fieldName);
+            String columnName = this.getColumnName(fieldName);
             sql = sql.SELECT(columnName);
 
-            OurbatisCrudHelper.ConditionColumn conditionColumn = f.getAnnotation(OurbatisCrudHelper.ConditionColumn.class);
+            OurbatisCrudHelper.ConditionColumn conditionColumn = f.getAnnotation(CONDITION_COLUMN);
             if ( conditionColumn == null ) continue;
             String mybatisParameterSyntax = String.format("#{%s}", fieldName);
             // String.format 은 따옴표 사용 시 Exception 발생
@@ -101,7 +102,7 @@ public final class OurbatisCrudProvider {
             sql = sql.WHERE(String.format("%s %s", columnName, formatSyntax));
         }
 
-        sql = sql.FROM(this.getTableName(conditionClass));
+        sql = sql.FROM(this.getTableName(this.getDomainClassType(context)));
 
         if (condition.isPaging()) {
             sql = sql.LIMIT(condition.getPageSize());
@@ -117,13 +118,13 @@ public final class OurbatisCrudProvider {
         Class<?> domainType = this.getDomainClassType(context);
         SQL sql = new SQL();
         sql = sql.SELECT(COUNT_QUERY);
-        sql = sql.FROM(getTableName(domainType));
+        sql = sql.FROM(this.getTableName(domainType));
         String query = sql.toString();
-        logging(query);
+        this.logging(query);
         return query;
     }
 
-    public <C extends PageCondition> String countCondition(C condition, ProviderContext context) throws IllegalAccessException{
+    public <C extends PageCondition> String countCondition(C condition, ProviderContext context) throws IllegalAccessException {
         if ( condition == null ) {
             return countAll(context);
         }
@@ -131,12 +132,12 @@ public final class OurbatisCrudProvider {
         Class<?> conditionClassType = condition.getClass();
         SQL sql = new SQL();
         sql = sql.SELECT(COUNT_QUERY);
-        sql = sql.FROM(getTableName(conditionClassType));
+        sql = sql.FROM(this.getTableName(this.getDomainClassType(context)));
 
         Field[] fields = conditionClassType.getDeclaredFields();
         for (Field f : fields) {
             String fieldName = f.getName();
-            OurbatisCrudHelper.ConditionColumn conditionColumn = f.getAnnotation(OurbatisCrudHelper.ConditionColumn.class);
+            OurbatisCrudHelper.ConditionColumn conditionColumn = f.getAnnotation(CONDITION_COLUMN);
             if ( conditionColumn == null ) continue;
             String mybatisParameterSyntax = String.format("#{%s}", fieldName);
             // String.format 은 따옴표 사용 시 Exception 발생

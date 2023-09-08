@@ -20,7 +20,7 @@ Mybatis Provider 를 활용하여 기본적인 Crud 에 대해 xml 로 쿼리를
 <dependency>
     <groupId>com.github.BBackJK</groupId>
     <artifactId>ourbatis</artifactId>
-    <version>v0.3.0</version>
+    <version>v0.4.0</version>
 </dependency>
 ```
 
@@ -36,7 +36,7 @@ allprojects {
 }
 ...
 dependencies {
-    implementation 'com.github.BBackJK:ourbatis:v0.3.0'
+    implementation 'com.github.BBackJK:ourbatis:v0.4.0'
 }
 ...
 ```
@@ -136,7 +136,6 @@ public class MemberService {
 @Getter
 @AllArgsConstructor(staticName = "of")  // 객체를 생성하기 위한 lombok
 @ToString                               // 로깅을 위한 lombok
-@OurbatisCrudHelper.Table(tableName="member")        // tableName 명시 안할 시 tableName을 MEMBER_CONDITION 으로 파싱함.
 public class MemberCondition extends PageCondition {
 
 
