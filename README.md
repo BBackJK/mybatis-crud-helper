@@ -66,16 +66,17 @@ CREATE TABLE member
 ```java
 @Getter
 @AllArgsConstructor(staticName = "of")  // 객체를 생성하기 위한 lombok
-@ToString               // 로깅을 위한 lombok
+@ToString                               // 로깅을 위한 lombok
+@OurbatisCrudHelper.Table               // Table 형태의 도메인임을 알린다. 해당 어노테이션이 없을 경우 domain class name 으로 table name 을 만들고, 어노테이션이 있고, tableName 속성을 따로 작성할 시 tableName 을 사용
 public class Member {
 
     /**
-     * @PK 어노테이션으로 해당 field 가 PK 임을 선언한다. PK가 없을 시, **ById 메소드 및 baseUpdateById 및 baseSave 가 에러가 발생.
+     * @OurbatisCrudHelper.PK 어노테이션으로 해당 field 가 PK 임을 선언한다. PK가 없을 시, **ById 메소드 및 baseUpdateById 및 baseSave 가 에러가 발생.
      * 이 @PK 어노테이션은 기본적으로 AutoIncrement PK 라고 인식. 따라서 AutoIncrement PK 가 아닐 시
      * 다음과 같이 사용 
-     *      @PK(isAutoIncrement=false)
+     *      @OurbatisCrudHelper.PK(isAutoIncrement=false)
      */
-    @PK
+    @OurbatisCrudHelper.PK
     private Long memberId;
     private String name;
     private Integer age;
@@ -88,11 +89,6 @@ public class Member {
 ```java
 @Mapper
 public interface MemberDao extends OurbatisCrudHelper<Member, Long> {
-
-    @Override
-    default Class<Member> getClassType() {  // 해당 메소드를 꼭 구현해야 정상적으로 동작함. (Reflect 로 동작하기 때문.)
-        return Member.class;
-    }
 }
 ```
 
@@ -117,19 +113,8 @@ public class MemberService {
         // 모든 Member 목록 반환
         List<Member> listAll = memberDao.baseSelectAll();
         
-        // Member 의 field 를 기반으로 동적 where 생성
-        // 배포버전 0.1.0 기준으로 `like` 및 `in` 과 같은 쿼리는 사용 X. 무조건 `=`
-        // 배포버전 0.2.0 기준으로 @deprecated
-        Member conditionDummy = Member.of(null, null, null, "W");
-        List<Member> filteringList = memberDao.baseSelectCondition(conditionDummy);
-        
         // 모든 Member 의 수를 반환 
         int countAll = memberDao.baseCountAll();
-
-        // filteringList 와 같은 동작으로 count 를 반환
-        Member conditionCountDummy = Member.of(null, null, null, "W");
-        // 배포버전 0.2.0 기준으로 @deprecated
-        int countCondition = memberDao.baseCountCondition(conditionCountDummy);
 
         // save 했던 dummy 를 나이가 10 에서 100 으로, 성별이 W 에서 M 으로 변경하려고 할 때,
         // side effect warning : field 가 null 일 경우 그대로 null 로 update 쳐짐. 따라서, baseSelectById 로 가져온 객체에 변경하고 싶은 값을 변경 후 update.
@@ -145,7 +130,81 @@ public class MemberService {
 ```
 
 
-### 3.2 Interceptor Helper
+### 3.2 Read Condition helper 
+
+```java
+@Getter
+@AllArgsConstructor(staticName = "of")  // 객체를 생성하기 위한 lombok
+@ToString                               // 로깅을 위한 lombok
+@OurbatisCrudHelper.Table(tableName="member")        // tableName 명시 안할 시 tableName을 MEMBER_CONDITION 으로 파싱함.
+public class MemberCondition extends PageCondition {
+
+
+    private Long memberId;
+    
+    @OurbatisCrudHelper.ConditionColumn(syntax = ConditionSyntax.R_LIKE)    // like 의 오른쪽에 %
+    private String name;
+
+    @OurbatisCrudHelper.ConditionColumn(syntax = ConditionSyntax.BIGGER)    // 같거나 큰것
+    private Integer age;
+
+    @OurbatisCrudHelper.ConditionColumn
+    private String gender;
+}
+```
+
+```java
+@Service
+@RequiredArgsConstructor
+public class MemberService {
+    
+    private final MemberDao memberDao;
+    
+    public void test() {
+        // 기본 컨디션
+        Member dummy1 = Member.of(null, "더미1", 10, "W");
+        Member dummy2 = Member.of(null, "더미2", 11, "M");
+        Member dummy3 = Member.of(null, "더미3", 12, "W");
+        
+        memberDao.baseSave(dummy1);
+        memberDao.baseSave(dummy2);
+        memberDao.baseSave(dummy3);
+        
+        MemberCondition memberCondition = MemberCondition.of(null, "더미", 11, "M");
+        
+        List<Member> memberList = memberDao.baseSelectCondition(memberCondition);
+        // memberList.size() == 1
+        
+        ...
+        
+        // 페이징 컨디션
+        Member dummy1 = Member.of(null, "더미1", 10, "W");
+        Member dummy2 = Member.of(null, "더미2", 11, "M");
+        Member dummy3 = Member.of(null, "더미3", 12, "W");
+        Member dummy4 = Member.of(null, "더미4", 13, "M");
+        Member dummy5 = Member.of(null, "더미5", 14, "M");
+
+        memberDao.baseSave(dummy1);
+        memberDao.baseSave(dummy2);
+        memberDao.baseSave(dummy3);
+        memberDao.baseSave(dummy4);
+        memberDao.baseSave(dummy5);
+
+        MemberCondition memberCondition = MemberCondition.of(null, "더미", 11, "M");
+        memberCondition.setPageSize(2);
+        memberCondition.setPageIndex(1);
+        memberCondition.enablePaging();
+        List<Member> pagingMemberList = memberDao.baseSelectCondition(memberCondition);
+        // pagingMemberList.size == 2 // dummy2, dummy4
+        // 만약 memberCondition.setPageIndex(2); 로 했을 시 dummy5 가 나옴.
+    }
+    
+}
+
+```
+
+
+### 3.3 Interceptor Helper
 
 Ourbatis 는 Mybatis Executor, Statement interceptor 를 미리 구현하여,
 
