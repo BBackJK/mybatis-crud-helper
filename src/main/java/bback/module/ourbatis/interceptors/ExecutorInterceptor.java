@@ -68,11 +68,11 @@ public class ExecutorInterceptor implements Interceptor {
                 break;
             case UPDATE:
                 for (PreCommandDelegator delegator : this.preCommandDelegatorList) {
-                    delegator.doIntercept(mappedStatement, queryParameter);
+                    delegator.doIntercept(executor, mappedStatement, queryParameter);
                 }
                 result = invocation.proceed();
                 for (PostCommandDelegator delegator : this.postCommandDelegatorList) {
-                    delegator.doIntercept(mappedStatement, queryParameter, result);
+                    delegator.doIntercept(executor, mappedStatement, queryParameter, result);
                 }
                 break;
             default:

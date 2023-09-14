@@ -1,18 +1,14 @@
 package bback.module.ourbatis.helper;
 
-public final class SnakeCaseHelper {
+import org.springframework.lang.Nullable;
 
-    public static final String CLASS_TYPE_WARNING = "getClassType() 메소드를 오버라이드 하여 default 로 'T' 타입을 return 해주세요.\n" + "public interface XDao extends OurbatisCrudHelper<X, Long> {\n" +
-            "\t@Override\n" +
-            "\tdefault Class<X> getClassType() {\n" +
-            "\t\treturn X.class;\n" +
-            "\t}\n" +
-            "}";
+public final class SnakeCaseHelper {
 
     private SnakeCaseHelper() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
+    @Nullable
     public static String translate(String input)
     {
         if (input == null) return null; // garbage in, garbage out

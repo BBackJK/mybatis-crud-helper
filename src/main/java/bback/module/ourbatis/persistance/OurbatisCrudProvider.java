@@ -62,7 +62,7 @@ public final class OurbatisCrudProvider {
             sql = sql.SELECT(getColumnName(f));
         }
         sql = sql.FROM(getTableName(domainType));
-        sql = sql.WHERE(String.format("%s = %s", getPrimaryKeyColumnName(pkField), pk));
+        sql = sql.WHERE(String.format("%s = %s", getPrimaryKeyColumnName(pkField), "#{pk}"));
         String query = sql.toString();
         logging(query);
         return query;
@@ -191,7 +191,7 @@ public final class OurbatisCrudProvider {
                 pkField = f;
             }
         }
-        sql = sql.WHERE(String.format("%s = %s", getPrimaryKeyColumnName(pkField), pk));
+        sql = sql.WHERE(String.format("%s = %s", getPrimaryKeyColumnName(pkField), "#{pk}"));
 
         String query = sql.toString();
         logging(query);

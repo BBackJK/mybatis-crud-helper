@@ -12,16 +12,23 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.junit.jupiter.api.*;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.Reader;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 
 class OurbatisCrudHelperTest {
 
+    private static String baseProjectPath = System.getProperty("user.dir");
+    private static String mapperPropertiesPath = baseProjectPath + File.separator + "src" + File.separator + "test" + File.separator + "resources";
     private static SqlSessionFactory sqlSessionFactory;
+    private static String h2BaseFilePath;
+
     @BeforeEach
     void setUp() throws Exception {
         // create a SqlSessionFactory
@@ -43,13 +50,21 @@ class OurbatisCrudHelperTest {
                 sqlRunner.run(memberDDL);
             }
         }
+
+        InputStream is = Files.newInputStream(new File(mapperPropertiesPath + "/bback/module/ourbatis/database/config/mapper.properties").toPath());
+        Properties props = new Properties();
+        props.load(is);
+        h2BaseFilePath = props.getProperty("url").replaceAll("jdbc:h2:~", "");
+        is.close();
     }
 
     @AfterEach
     void after() {
         String homeDir = System.getProperty("user.home");
-        File mvFile = new File(homeDir + "/test.mv.db");
-        File traceFile = new File(homeDir + "/test.trace.db");
+        String mvDbFilePath = homeDir + h2BaseFilePath + ".mv.db";
+        String traceDbFilePath = homeDir + h2BaseFilePath + ".trace.db";
+        File mvFile = new File(mvDbFilePath);
+        File traceFile = new File(traceDbFilePath);
         if (mvFile.exists()){
             mvFile.delete();
         }
@@ -61,7 +76,6 @@ class OurbatisCrudHelperTest {
 
     @Test
     @DisplayName("Member DDL 이 정상적으로 등록됐는지 확인")
-    @Order(1)
     void check_created_member_ddl() throws SQLException {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             Connection connection = sqlSession.getConnection();
@@ -74,7 +88,6 @@ class OurbatisCrudHelperTest {
 
     @Test
     @DisplayName("Member Insert 테스트")
-    @Order(2)
     void mapper_save_test() {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             AnnotatedMemberMapper memberMapper = sqlSession.getMapper(AnnotatedMemberMapper.class);
@@ -92,7 +105,6 @@ class OurbatisCrudHelperTest {
 
     @Test
     @DisplayName("Member Insert PersistenceException 테스트")
-    @Order(3)
     void mapper_save_exception_test() {
         Assertions.assertThrows(PersistenceException.class, () -> {
             try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
@@ -112,7 +124,6 @@ class OurbatisCrudHelperTest {
 
     @Test
     @DisplayName("Member Select All 테스트")
-    @Order(4)
     void mapper_select_all_test() {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             AnnotatedMemberMapper memberMapper = sqlSession.getMapper(AnnotatedMemberMapper.class);
@@ -134,7 +145,6 @@ class OurbatisCrudHelperTest {
 
     @Test
     @DisplayName("Member Select Detail 테스트")
-    @Order(5)
     void mapper_select_detail_test() {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             AnnotatedMemberMapper memberMapper = sqlSession.getMapper(AnnotatedMemberMapper.class);
@@ -206,7 +216,6 @@ class OurbatisCrudHelperTest {
 
     @Test
     @DisplayName("Member Count All 테스트")
-    @Order(6)
     void mapper_count_all_test() {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             AnnotatedMemberMapper memberMapper = sqlSession.getMapper(AnnotatedMemberMapper.class);
@@ -221,7 +230,6 @@ class OurbatisCrudHelperTest {
 
     @Test
     @DisplayName("Member Update 테스트")
-    @Order(7)
     void mapper_update_test() {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             AnnotatedMemberMapper memberMapper = sqlSession.getMapper(AnnotatedMemberMapper.class);
@@ -242,7 +250,6 @@ class OurbatisCrudHelperTest {
 
     @Test
     @DisplayName("Member Delete 테스트")
-    @Order(8)
     void mapper_delete_test() {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             AnnotatedMemberMapper memberMapper = sqlSession.getMapper(AnnotatedMemberMapper.class);
