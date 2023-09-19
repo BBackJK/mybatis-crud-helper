@@ -136,7 +136,7 @@ class OurbatisCrudHelperTest {
                     )
             );
             Assertions.assertEquals(1, insertAffected);
-            List<AnnotatedMember> memberList = memberMapper.baseSelectAll();
+            List<AnnotatedMember> memberList = memberMapper.baseFindAll();
             Assertions.assertEquals(1, memberList.size());
             AnnotatedMember firstMember = memberList.get(0);
             Assertions.assertEquals("홍길동1", firstMember.getName());
@@ -157,7 +157,7 @@ class OurbatisCrudHelperTest {
                     )
             );
             Assertions.assertEquals(1, insertAffected);
-            Optional<AnnotatedMember> unknownMember = memberMapper.baseSelectById(1L);
+            Optional<AnnotatedMember> unknownMember = memberMapper.baseFindById(1L);
             AnnotatedMember member = unknownMember.get();
             Assertions.assertEquals("홍길동1", member.getName());
         }
@@ -174,7 +174,7 @@ class OurbatisCrudHelperTest {
             memberMapper.baseSave(AnnotatedMember.of(null, "홍길동4", 50, "M"));
             memberMapper.baseSave(AnnotatedMember.of(null, "1홍길동", 1, "W"));
 
-            List<AnnotatedMember> out1 = memberMapper.baseSelectCondition(
+            List<AnnotatedMember> out1 = memberMapper.baseFindListCondition(
                     MemberCondition.of(
                                 null
                             , "홍길동"
@@ -184,7 +184,7 @@ class OurbatisCrudHelperTest {
             );
             Assertions.assertEquals(1, out1.size());
 
-            List<AnnotatedMember> out2 = memberMapper.baseSelectCondition(
+            List<AnnotatedMember> out2 = memberMapper.baseFindListCondition(
                     MemberCondition.of(
                             null
                             , "1"
@@ -194,7 +194,7 @@ class OurbatisCrudHelperTest {
             );
             Assertions.assertEquals(0, out2.size());
 
-            List<AnnotatedMember> out3 = memberMapper.baseSelectCondition(
+            List<AnnotatedMember> out3 = memberMapper.baseFindListCondition(
                     MemberCondition.of(
                             null
                             , "홍길동"
@@ -208,7 +208,7 @@ class OurbatisCrudHelperTest {
             memberCondition.setPageSize(1);
             memberCondition.enablePaging();
 
-            List<AnnotatedMember> members = memberMapper.baseSelectCondition(memberCondition);
+            List<AnnotatedMember> members = memberMapper.baseFindListCondition(memberCondition);
             Assertions.assertEquals(1, members.size());
             Assertions.assertEquals("홍길동1", members.get(0).getName());
         }
@@ -234,14 +234,14 @@ class OurbatisCrudHelperTest {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             AnnotatedMemberMapper memberMapper = sqlSession.getMapper(AnnotatedMemberMapper.class);
             memberMapper.baseSave(AnnotatedMember.of(null, "홍길동1", 10, "M"));
-            AnnotatedMember member = memberMapper.baseSelectById(1L).orElseThrow(RuntimeException::new);
+            AnnotatedMember member = memberMapper.baseFindById(1L).orElseThrow(RuntimeException::new);
 
             Assertions.assertEquals(10, member.getAge());
 
             member.setAge(5);
             member.setGender("W");
             int updateAffected = memberMapper.baseUpdateById(member);
-            AnnotatedMember modifiedMember = memberMapper.baseSelectById(1L).orElseThrow(RuntimeException::new);
+            AnnotatedMember modifiedMember = memberMapper.baseFindById(1L).orElseThrow(RuntimeException::new);
 
             Assertions.assertEquals(1, updateAffected);
             Assertions.assertEquals(5, modifiedMember.getAge());
