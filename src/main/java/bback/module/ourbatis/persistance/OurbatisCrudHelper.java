@@ -12,6 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public interface OurbatisCrudHelper<T, P> {
 
@@ -19,13 +20,13 @@ public interface OurbatisCrudHelper<T, P> {
     int baseSave(T t);
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.SELECT_HANDLER)
-    Optional<T> baseSelectById(P pk);
+    Optional<T> baseFindById(P pk);
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.SELECTS_HANDLER)
-    List<T> baseSelectAll();
+    List<T> baseFindAll();
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.SELECT_CONDITION_HANDLER)
-    <C extends PageCondition> List<T> baseSelectCondition(C pageCondition);
+    <C extends PageCondition> List<T> baseFindListCondition(C pageCondition);
 
     @SelectProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.COUNT_HANDLER)
     int baseCountAll();
@@ -38,6 +39,14 @@ public interface OurbatisCrudHelper<T, P> {
 
     @DeleteProvider(type = OurbatisCrudProvider.class, method = OurbatisCrudProvider.DELETE_HANDLER)
     int baseDeleteById(P pk);
+
+    default T baseGetById(P pk) {
+        return this.baseFindById(pk).orElseThrow(() -> new RuntimeException("Not Found Model."));
+    }
+
+    default <X extends Throwable> T baseGetById(P pk, Supplier<? extends X> exceptionSupplier) throws X {
+        return this.baseFindById(pk).orElseThrow(exceptionSupplier);
+    }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)

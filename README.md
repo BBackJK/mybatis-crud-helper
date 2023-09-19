@@ -20,7 +20,7 @@ Mybatis Provider 를 활용하여 기본적인 Crud 에 대해 xml 로 쿼리를
 <dependency>
     <groupId>com.github.BBackJK</groupId>
     <artifactId>ourbatis</artifactId>
-    <version>v0.5.0</version>
+    <version>v0.6.0</version>
 </dependency>
 ```
 
@@ -36,7 +36,7 @@ allprojects {
 }
 ...
 dependencies {
-    implementation 'com.github.BBackJK:ourbatis:v0.5.0'
+    implementation 'com.github.BBackJK:ourbatis:v0.6.0'
 }
 ...
 ```
